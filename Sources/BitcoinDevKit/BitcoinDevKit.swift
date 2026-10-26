@@ -4291,6 +4291,14 @@ public protocol ElectrumClientProtocol: AnyObject, Sendable {
     func ping() throws 
     
     /**
+     * Insert transactions into the transaction cache so that the client will not re-fetch them.
+     *
+     * Typically used with a new client before a `full_scan` or `sync`, passing the transactions
+     * the wallet already has (see `Wallet.transactions`), so that the scan only downloads new ones.
+     */
+    func populateTxCache(txs: [Transaction]) 
+    
+    /**
      * Returns the minimum accepted fee by the server’s node in Bitcoin, not Satoshi.
      */
     func relayFee() throws  -> Double
@@ -4502,6 +4510,20 @@ open func fullScan(request: FullScanRequest, stopGap: UInt64, batchSize: UInt64,
 open func ping()throws   {try rustCallWithError(FfiConverterTypeElectrumError_lift) {
     uniffi_bdkffi_fn_method_electrumclient_ping(
             self.uniffiCloneHandle(),$0
+    )
+}
+}
+    
+    /**
+     * Insert transactions into the transaction cache so that the client will not re-fetch them.
+     *
+     * Typically used with a new client before a `full_scan` or `sync`, passing the transactions
+     * the wallet already has (see `Wallet.transactions`), so that the scan only downloads new ones.
+     */
+open func populateTxCache(txs: [Transaction])  {try! rustCall() {
+    uniffi_bdkffi_fn_method_electrumclient_populate_tx_cache(
+            self.uniffiCloneHandle(),
+        FfiConverterSequenceTypeTransaction.lower(txs),$0
     )
 }
 }
@@ -25208,6 +25230,9 @@ private let initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_bdkffi_checksum_method_electrumclient_ping() != 34274) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_bdkffi_checksum_method_electrumclient_populate_tx_cache() != 53901) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_bdkffi_checksum_method_electrumclient_relay_fee() != 22615) {
