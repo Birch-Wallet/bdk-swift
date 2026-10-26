@@ -4291,6 +4291,16 @@ public protocol ElectrumClientProtocol: AnyObject, Sendable {
     func ping() throws 
     
     /**
+     * Inserts the wallet's transactions and anchors into the client's in-memory caches so that
+     * the client will not re-fetch them.
+     *
+     * Typically used with a new client before a `full_scan` or `sync`, so that the scan only
+     * fetches the transactions and merkle proofs the wallet does not already have. A cached anchor
+     * is only used while its block hash matches the server's header at that height.
+     */
+    func populateCache(wallet: Wallet) 
+    
+    /**
      * Returns the minimum accepted fee by the server’s node in Bitcoin, not Satoshi.
      */
     func relayFee() throws  -> Double
@@ -4502,6 +4512,22 @@ open func fullScan(request: FullScanRequest, stopGap: UInt64, batchSize: UInt64,
 open func ping()throws   {try rustCallWithError(FfiConverterTypeElectrumError_lift) {
     uniffi_bdkffi_fn_method_electrumclient_ping(
             self.uniffiCloneHandle(),$0
+    )
+}
+}
+    
+    /**
+     * Inserts the wallet's transactions and anchors into the client's in-memory caches so that
+     * the client will not re-fetch them.
+     *
+     * Typically used with a new client before a `full_scan` or `sync`, so that the scan only
+     * fetches the transactions and merkle proofs the wallet does not already have. A cached anchor
+     * is only used while its block hash matches the server's header at that height.
+     */
+open func populateCache(wallet: Wallet)  {try! rustCall() {
+    uniffi_bdkffi_fn_method_electrumclient_populate_cache(
+            self.uniffiCloneHandle(),
+        FfiConverterTypeWallet_lower(wallet),$0
     )
 }
 }
@@ -25208,6 +25234,9 @@ private let initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_bdkffi_checksum_method_electrumclient_ping() != 34274) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_bdkffi_checksum_method_electrumclient_populate_cache() != 18197) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_bdkffi_checksum_method_electrumclient_relay_fee() != 22615) {
